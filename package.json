@@ -4,21 +4,42 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "build": "npm install --legacy-peer-deps && next build",
+    "start": "next start -p ${PORT-3000}",
+    "lint": "next lint",
+    "db": "npm run db:create && npm run db:migrate && npm run db:seed",
+    "db:migrate": "npx sequelize-cli db:migrate",
+    "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
+    "db:seed": "npx sequelize-cli db:seed:all",
+    "db:create": "npx sequelize-cli db:create"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.525.0",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.14.2",
+    "next": "15.4.1",
+    "next-auth": "^4.24.11",
+    "pg-hstore": "^2.3.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.4.1"
+    "sequelize": "^6.37.7"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "eslint": "^9",
+    "eslint-config-next": "15.4.1",
+    "sequelize-cli": "^6.6.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
