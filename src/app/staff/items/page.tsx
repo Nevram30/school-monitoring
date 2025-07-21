@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import Layout from '../layout';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface Item {
@@ -44,8 +44,8 @@ export default function StaffItemsPage() {
       return;
     }
 
-    if (session.user.type !== 2) {
-      router.push('/dashboard');
+    if (session.user?.role !== 'staff') {
+      router.push('/login');
       return;
     }
 

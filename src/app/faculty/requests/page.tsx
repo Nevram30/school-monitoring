@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import RoleBasedLayout from '@/components/RoleBasedLayout'
+import Layout from '../layout'
 
 export default function FacultyRequests() {
   const { data: session, status } = useSession()
@@ -32,7 +32,7 @@ export default function FacultyRequests() {
   }
 
   return (
-    <RoleBasedLayout requiredRole="faculty">
+    <Layout>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">My Requests</h1>
@@ -111,6 +111,6 @@ export default function FacultyRequests() {
           </div>
         </div>
       </div>
-    </RoleBasedLayout>
+    </Layout>
   )
 }
