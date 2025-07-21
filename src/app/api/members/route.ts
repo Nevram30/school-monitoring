@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
-import { Member } from '@/models';
-import sequelize from '@/lib/database';
+
+import { Member } from '../../../../server/db/models';
+import { sequelize } from '../../../../server/db/models/database';
 import { Op } from 'sequelize';
+import { authOptions } from '@/lib/auth-config';
 
 export async function GET(request: NextRequest) {
   try {

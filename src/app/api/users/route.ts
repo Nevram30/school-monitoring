@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-config';
-import { User } from '@/models';
-import sequelize from '@/lib/database';
+import { User } from '../../../../server/db/models';
+import { sequelize } from '../../../../server/db/models/database';
 import { Op } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
@@ -78,7 +78,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Only admins can delete users
-    if (session.user.type !== 1) {
+    if (!session.user || (session.user as any).type !== 1) {
       return NextResponse.json(
         { success: false, error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -96,7 +96,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Prevent deleting yourself
-    if (parseInt(userId) === parseInt(session.user.id)) {
+    if (parseInt(userId) === parseInt((session.user as any).id)) {
       return NextResponse.json(
         { success: false, error: 'Cannot delete your own account' },
         { status: 400 }
@@ -164,11 +164,22 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
 
+    // Map type number to role string
+    const getRole = (type: number): 'admin' | 'faculty' | 'staff' => {
+      switch (type) {
+        case 1: return 'admin';
+        case 2: return 'faculty';
+        case 3: return 'staff';
+        default: return 'staff';
+      }
+    };
+
+    const userType = parseInt(userData.type) || 3; // Default to staff (3)
     const userToCreate = {
       name: userData.name,
       username: userData.username,
       password: hashedPassword,
-      type: parseInt(userData.type) || 2, // Default to staff
+      role: getRole(userType),
       status: 1 // Active by default
     };
 

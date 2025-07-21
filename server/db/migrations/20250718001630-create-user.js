@@ -23,16 +23,16 @@ module.exports = {
         type: Sequelize.STRING(50),
         allowNull: false
       },
-      type: {
-        type: Sequelize.INTEGER,
+      role: {
+        type: Sequelize.ENUM('admin', 'staff', 'faculty'),
         allowNull: false,
-        comment: '1=admin, 2=staff'
+        defaultValue: 'admin',
       },
       status: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 1,
-        comment: '1=active, 2=inactive'
+        comment: 'admin=active, admin=inactive'
       }
     });
   },

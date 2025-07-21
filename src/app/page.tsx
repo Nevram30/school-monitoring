@@ -11,9 +11,21 @@ export default function HomePage() {
   useEffect(() => {
     if (status === 'loading') return; // Still loading
 
-    if (session) {
-      // User is authenticated, redirect to dashboard
-      router.push('/dashboard');
+    if (session?.user?.role) {
+      // User is authenticated, redirect based on role
+      switch (session.user.role) {
+        case 'admin':
+          router.push('/admin');
+          break;
+        case 'staff':
+          router.push('/staff');
+          break;
+        case 'faculty':
+          router.push('/faculty');
+          break;
+        default:
+          router.push('/login');
+      }
     } else {
       // User is not authenticated, redirect to login
       router.push('/login');

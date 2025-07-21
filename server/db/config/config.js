@@ -1,43 +1,42 @@
-require('dotenv').config({ path: '../../../.env.local' });
+const dotenv = require('dotenv')
+dotenv.config()
 
-module.exports = {
-  development: {
-    username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'spms',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
-    logging: console.log,
-    define: {
-      timestamps: false,
-      freezeTableName: true
+const app = new Proxy(process.env, {
+  get: (target, prop) => {
+    if (!(prop in target)) {
+      throw new Error(`Environment variable ${prop} is missing`)
     }
+
+    return target[prop]
   },
-  test: {
-    username: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME + '_test' || 'spms_test',
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
-    logging: false,
-    define: {
-      timestamps: false,
-      freezeTableName: true
-    }
-  },
+})
+
+const config = {
   production: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
+    username: app.MYSQLUSER,
+    password: app.MYSQLPASSWORD,
+    database: app.MYSQLDATABASE,
+    host: app.MYSQLHOST,
     dialect: 'mysql',
+    dialectModule: require('mysql2'),
     logging: false,
-    define: {
-      timestamps: false,
-      freezeTableName: true
+    dialectOptions: {
+      decimalNumbers: true,
+    },
+  },
+  get development() {
+    return {
+      ...this.production,
+      logging: console.log,
     }
-  }
-};
+  },
+  get test() {
+    return {
+      ...this.development,
+      database: `${app.MYSQLDATABASE}-test`,
+      logging: false,
+    }
+  },
+}
+
+module.exports = config // required for sequelize-cli

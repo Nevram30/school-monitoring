@@ -1,122 +1,166 @@
-import NextAuth, { NextAuthOptions } from 'next-auth'
+import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { JWT } from 'next-auth/jwt'
-import { Session } from 'next-auth'
-import { User } from '@/models'
-import { verifyMD5Password, comparePassword } from '@/lib/auth'
-import sequelize from '@/lib/database'
+import * as bcrypt from 'bcrypt'
+import * as crypto from 'crypto'
 
-// Extend the built-in session types
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id: string
-      name: string
-      username: string
-      type: number
-    }
-  }
+import * as yup from 'yup'
+import authschema from '@/schema/auth.schema'
 
-  interface User {
-    id: string
-    name: string
-    username: string
-    type: number
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string
-    username: string
-    type: number
-  }
-}
+import { signJwtAccessToken } from './jwt'
+import { User } from '../../server/db/models'
 
 export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        username: { label: 'Username', type: 'text' },
-        password: { label: 'Password', type: 'password' }
-      },
-      async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
-          return null
-        }
-
-        try {
-          await sequelize.authenticate()
-          
-          // Find user by username
-          const user = await User.findOne({
-            where: { 
-              username: credentials.username, 
-              status: 1 
-            }
-          })
-
-          if (!user) {
-            return null
-          }
-
-          // Verify password (support both bcrypt and MD5 for compatibility)
-          let isValidPassword = false;
-          
-          // Try bcrypt first (for new users)
-          if (user.password.startsWith('$2')) {
-            isValidPassword = await comparePassword(credentials.password, user.password);
-          } else {
-            // Fall back to MD5 for legacy users
-            isValidPassword = verifyMD5Password(credentials.password, user.password);
-          }
-
-          if (!isValidPassword) {
-            return null
-          }
-
-          // Return user object that will be stored in the session
-          return {
-            id: user.id.toString(),
-            name: user.name,
-            username: user.username,
-            type: user.type,
-          }
-        } catch (error) {
-          console.error('Authentication error:', error)
-          return null
-        }
-      }
-    })
-  ],
-  callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
-      // Persist user data in the token
-      if (user) {
-        token.id = user.id
-        token.username = user.username
-        token.type = user.type
-      }
-      return token
-    },
-    async session({ session, token }: { session: Session; token: JWT }) {
-      // Send properties to the client
-      if (token) {
-        session.user.id = token.id
-        session.user.username = token.username
-        session.user.type = token.type
-      }
-      return session
-    }
-  },
   pages: {
     signIn: '/login',
   },
   session: {
-    strategy: 'jwt' as const,
+    strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'fMyZXz7KWRR3CiY/PY+Cqn8TGBRUhx9iotIql9MhtYE=',
+  secret: process.env.NEXTAUTH_SECRET,
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        name: { label: 'Name', type: 'text' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials: any): Promise<any> {
+        if (!credentials) {
+          return null
+        }
+
+        const { name, password } = credentials
+
+        try {
+          // Validate form data with Yup schema
+          authschema.validateSync({ name, password }, { abortEarly: false })
+
+          // Find user by username (not name)
+          const user = await User.findOne({
+            where: { username: credentials.name },
+          })
+
+          if (!user) {
+            throw new Error(
+              JSON.stringify({
+                success: false,
+                error: {
+                  general: 'Invalid name or password',
+                },
+              })
+            )
+          }
+
+          if (!user.password) {
+            throw new Error(
+              JSON.stringify({
+                success: false,
+                error: {
+                  general: 'Account exists but has no password set',
+                },
+              })
+            )
+          }
+
+          // Check password - support both MD5 (legacy) and bcrypt
+          let isPasswordValid = false;
+          
+          // First try MD5 (for seeded admin user)
+          const md5Hash = crypto.createHash('md5').update(password).digest('hex');
+          if (user.password === md5Hash) {
+            isPasswordValid = true;
+          } else {
+            // If MD5 doesn't match, try bcrypt
+            try {
+              isPasswordValid = await bcrypt.compare(password, user.password);
+            } catch (error) {
+              // If bcrypt fails, password is invalid
+              isPasswordValid = false;
+            }
+          }
+
+          if (!isPasswordValid) {
+            throw new Error(
+              JSON.stringify({
+                success: false,
+                error: {
+                  general: 'Invalid name or password',
+                },
+              })
+            )
+          }
+
+          const { password: pass, ...userWithoutPass } = user.toJSON()
+
+          const accessToken = signJwtAccessToken(userWithoutPass)
+
+          return {
+            ...userWithoutPass,
+            accessToken,
+          }
+        } catch (error) {
+          if (error instanceof yup.ValidationError) {
+            let errors = {}
+            error.inner.forEach((result) => {
+              errors = { ...errors, [result.path as any]: result.message }
+            })
+
+            throw new Error(
+              JSON.stringify({
+                success: false,
+                error: errors,
+              })
+            )
+          }
+
+          throw new Error(
+            JSON.stringify({
+              success: false,
+              error: (error as Error).message,
+              status: 500,
+            })
+          )
+        }
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        // Store user data in token
+        token.user = {
+          id: Number(user.id),
+          name: user.name,
+          username: user.username,
+          role: user.role,
+          status: Number(user.status)
+        }
+      }
+      return token
+    },
+    async session({ session, token }) {
+      // Pass user data from token to session
+      if (token.user) {
+        session.user = token.user as any
+      }
+      return session
+    },
+  },
 }
 
-export default NextAuth(authOptions)
+// Export alias for backward compatibility
+export const options = authOptions;
+
+function findUser(object: Record<string, any>): any | null {
+  for (const key in object) {
+    if (key === 'user' && object.user && object.user.role) {
+      return object[key]
+    } else if (typeof object[key] === 'object') {
+      const result = findUser(object[key])
+      if (result) {
+        return result
+      }
+    }
+  }
+  return null
+}
