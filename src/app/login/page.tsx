@@ -12,7 +12,7 @@ const SignIn = () => {
       {/* Header */}
       <div className='mb-8 text-center'>
         <h1 className='text-3xl lg:text-4xl font-bold text-gray-900 mb-2'>
-          Student Property Monitoring System
+          Simplified Student Property Monitoring System
         </h1>
       </div>
 
