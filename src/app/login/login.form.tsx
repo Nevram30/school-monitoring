@@ -163,20 +163,6 @@ const SignInForm: React.FC = () => {
           >
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </button>
-
-          <div className="flex justify-center gap-1 mt-6 lg:mt-8 text-xs lg:text-sm">
-            <p>Don't have an account?</p>
-            <Link href="/register" className="text-blue-600 hover:text-blue-500">Sign up</Link>
-          </div>
-        </div>
-
-        <div className="text-center text-xs lg:text-sm">
-          <Link
-            href="/forgot-password"
-            className="text-blue-600 hover:text-blue-500"
-          >
-            Forgot your password?
-          </Link>
         </div>
       </form>
     </div>
