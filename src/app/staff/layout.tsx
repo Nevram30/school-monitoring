@@ -40,7 +40,7 @@ const ProtectedLayout: React.FC<PropsWithChildren> = ({
   }
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       <StaffAsideNavigation />
       <div className="flex-1 flex flex-col">
         <StaffHeader />
