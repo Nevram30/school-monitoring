@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 
 export default function StaffAsideNavigation() {
     const pathname = usePathname()
+    const { data: session } = useSession()
 
     const navigationItems = [
         {
@@ -40,27 +41,26 @@ export default function StaffAsideNavigation() {
     }
 
     return (
-        <aside className="w-64 min-h-screen bg-gray-50 border-r border-gray-200 flex flex-col">
-            <div className="p-6 border-b border-gray-200 bg-white">
-                <h1 className="text-xl font-bold text-gray-800">Staff Panel</h1>
-                <p className="text-sm text-gray-600 mt-1">Property Management</p>
+         <aside className="w-64 min-h-screen bg-white shadow-md flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+                <h1 className="text-xl font-bold text-gray-800">{session?.user?.name}</h1>
             </div>
             
-            <nav className="mt-4 flex-1">
-                <ul className="space-y-1">
+            <nav className="mt-6 flex-1">
+                <ul className="space-y-2 px-4">
                     {navigationItems.map((item) => {
                         const isActive = pathname === item.href
                         return (
                             <li key={item.href}>
                                 <Link
                                     href={item.href}
-                                    className={`flex items-center px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
                                         isActive
-                                            ? 'bg-blue-500 text-white border-r-4 border-blue-600'
-                                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                                            ? 'bg-blue-100 text-blue-700 border-r-4 border-blue-700'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }`}
                                 >
-                                    <span className="mr-3 text-base">{item.icon}</span>
+                                    <span className="mr-3 text-lg">{item.icon}</span>
                                     {item.label}
                                 </Link>
                             </li>
@@ -70,7 +70,7 @@ export default function StaffAsideNavigation() {
             </nav>
 
             {/* Logout Section */}
-            <div className="p-4 border-t border-gray-200 bg-white">
+            <div className="p-4 border-t border-gray-200">
                 <button
                     onClick={handleSignOut}
                     className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
