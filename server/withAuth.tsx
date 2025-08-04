@@ -58,7 +58,7 @@ export function withAuthLayout<P extends object>(options?: UseAuthOptions) {
       if (auth.isLoading) {
         return (
           <div>
-            <FullScreenLoader>Checking User ...</FullScreenLoader>
+            <FullScreenLoader />
           </div>
         )
       }

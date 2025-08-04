@@ -1,5 +1,5 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from './database';
+import { DataTypes, Model, Optional } from "sequelize";
+import { sequelize } from "./database";
 
 interface ItemAttributes {
   id: number;
@@ -14,11 +14,16 @@ interface ItemAttributes {
   i_mr: string;
   i_price: number;
   i_photo: string;
+  no_of_items?: number;
+  remarks?: string;
 }
 
-interface ItemCreationAttributes extends Optional<ItemAttributes, 'id'> {}
+interface ItemCreationAttributes extends Optional<ItemAttributes, "id"> {}
 
-class Item extends Model<ItemAttributes, ItemCreationAttributes> implements ItemAttributes {
+class Item
+  extends Model<ItemAttributes, ItemCreationAttributes>
+  implements ItemAttributes
+{
   public id!: number;
   public i_deviceID!: string;
   public i_model!: string;
@@ -88,10 +93,18 @@ Item.init(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    no_of_items: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    remarks: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     sequelize,
-    tableName: 'item',
+    tableName: "item",
     timestamps: false,
   }
 );

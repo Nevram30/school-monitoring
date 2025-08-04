@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-config';
-import { Borrow, Item, Member, Room } from '../../../../server/db/models/index';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth-config";
+import { Borrow, Item, Member, Room } from "../../../../server/db/models/index";
 
-import { Op } from 'sequelize';
-import { sequelize } from '../../../../server/db/models/database';
+import { Op } from "sequelize";
+import { sequelize } from "../../../../server/db/models/database";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,74 +14,78 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
 
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const reportType = searchParams.get('type') || 'summary';
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const reportType = searchParams.get("type") || "summary";
 
     let whereClause: any = {};
-    
+
     if (startDate && endDate) {
       whereClause.b_date_borrowed = {
-        [Op.between]: [new Date(startDate), new Date(endDate)]
+        [Op.between]: [new Date(startDate), new Date(endDate)],
       };
     }
 
     switch (reportType) {
-      case 'summary':
+      case "summary":
         // Get summary statistics
         const totalBorrows = await Borrow.count({ where: whereClause });
-        const activeBorrows = await Borrow.count({ 
-          where: { ...whereClause, b_status: 1 } 
+        const activeBorrows = await Borrow.count({
+          where: { ...whereClause, b_status: 1 },
         });
-        const returnedBorrows = await Borrow.count({ 
-          where: { ...whereClause, b_status: 2 } 
+        const returnedBorrows = await Borrow.count({
+          where: { ...whereClause, b_status: 2 },
         });
-        const overdueBorrows = await Borrow.count({ 
-          where: { 
-            ...whereClause, 
+        const overdueBorrows = await Borrow.count({
+          where: {
+            ...whereClause,
             b_status: 1,
-            b_due_date: { [Op.lt]: new Date() }
-          } 
+            b_due_date: { [Op.lt]: new Date() },
+          },
         });
 
         // Get most borrowed items
         const mostBorrowedItems = await Borrow.findAll({
           where: whereClause,
-          include: [{
-            model: Item,
-            as: 'Item',
-            attributes: ['i_model', 'i_deviceID']
-          }],
-          attributes: [
-            'item_id',
-            [sequelize.fn('COUNT', sequelize.col('Borrow.id')), 'borrow_count']
+          include: [
+            {
+              model: Item,
+              as: "Item",
+              attributes: ["i_model", "i_deviceID"],
+            },
           ],
-          group: ['item_id', 'Item.id'],
-          order: [[sequelize.fn('COUNT', sequelize.col('Borrow.id')), 'DESC']],
-          limit: 10
+          attributes: [
+            "item_id",
+            [sequelize.fn("COUNT", sequelize.col("Borrow.id")), "borrow_count"],
+          ],
+          group: ["item_id", "Item.id"],
+          order: [[sequelize.fn("COUNT", sequelize.col("Borrow.id")), "DESC"]],
+          limit: 10,
         });
 
         // Get most active members
         const mostActiveMembers = await Borrow.findAll({
           where: whereClause,
-          include: [{
-            model: Member,
-            as: 'Member',
-            attributes: ['m_fname', 'm_lname']
-          }],
-          attributes: [
-            'member_id',
-            [sequelize.fn('COUNT', sequelize.col('Borrow.id')), 'borrow_count']
+          include: [
+            {
+              model: Member,
+              as: "Member",
+              attributes: ["m_fname", "m_lname"],
+            },
           ],
-          group: ['member_id', 'Member.id'],
-          order: [[sequelize.fn('COUNT', sequelize.col('Borrow.id')), 'DESC']],
-          limit: 10
+          attributes: [
+            "member_id",
+            [sequelize.fn("COUNT", sequelize.col("Borrow.id")), "borrow_count"],
+          ],
+          group: ["member_id", "Member.id"],
+          order: [[sequelize.fn("COUNT", sequelize.col("Borrow.id")), "DESC"]],
+          limit: 10,
         });
 
         // Get total counts for items, members, rooms
@@ -92,9 +96,9 @@ export async function GET(request: NextRequest) {
         // Transform mostBorrowedItems to match frontend expectations
         const popularItems = mostBorrowedItems.map((item: any) => ({
           id: item.item_id,
-          i_model: item.Item?.i_model || 'Unknown',
-          i_deviceID: item.Item?.i_deviceID || 'Unknown',
-          borrowCount: parseInt(item.getDataValue('borrow_count'))
+          i_model: item.Item?.i_model || "Unknown",
+          i_deviceID: item.Item?.i_deviceID || "Unknown",
+          borrowCount: parseInt(item.getDataValue("borrow_count")),
         }));
 
         // Create comprehensive recent activity from multiple sources
@@ -104,51 +108,54 @@ export async function GET(request: NextRequest) {
         const recentBorrows = await Borrow.findAll({
           where: {
             b_date_borrowed: {
-              [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-            }
+              [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+            },
           },
           include: [
             {
               model: Item,
-              as: 'Item',
-              attributes: ['i_model', 'i_deviceID'],
-              required: false
+              as: "Item",
+              attributes: ["i_model", "i_deviceID"],
+              required: false,
             },
             {
               model: Member,
-              as: 'Member',
-              attributes: ['m_fname', 'm_lname'],
-              required: false
-            }
+              as: "Member",
+              attributes: ["m_fname", "m_lname"],
+              required: false,
+            },
           ],
-          order: [['b_date_borrowed', 'DESC']],
-          limit: 15
+          order: [["b_date_borrowed", "DESC"]],
+          limit: 15,
         });
 
-        // Debug logging
-        console.log('Recent borrows found:', recentBorrows.length);
         if (recentBorrows.length > 0) {
-          console.log('First borrow sample:', JSON.stringify(recentBorrows[0], null, 2));
+          console.log(
+            "First borrow sample:",
+            JSON.stringify(recentBorrows[0], null, 2)
+          );
         }
 
         // Add borrow activities
         recentBorrows.forEach((borrow: any) => {
-          console.log('Processing borrow:', {
+          console.log("Processing borrow:", {
             id: borrow.id,
             member: borrow.Member,
             item: borrow.Item,
-            date: borrow.b_date_borrowed
+            date: borrow.b_date_borrowed,
           });
-          
-          const memberName = `${borrow.Member?.m_fname || 'Unknown'} ${borrow.Member?.m_lname || 'Member'}`;
-          const itemName = borrow.Item?.i_model || 'Unknown Item';
-          const deviceId = borrow.Item?.i_deviceID || 'N/A';
-          
+
+          const memberName = `${borrow.Member?.m_fname || "Unknown"} ${
+            borrow.Member?.m_lname || "Member"
+          }`;
+          const itemName = borrow.Item?.i_model || "Unknown Item";
+          const deviceId = borrow.Item?.i_deviceID || "N/A";
+
           activities.push({
             id: `borrow-${borrow.id}`,
-            type: 'borrow',
+            type: "borrow",
             description: `${memberName} borrowed ${itemName} (${deviceId})`,
-            date: borrow.b_date_borrowed
+            date: borrow.b_date_borrowed,
           });
         });
 
@@ -158,36 +165,38 @@ export async function GET(request: NextRequest) {
             b_status: 2, // Returned status
             b_date_returned: {
               [Op.ne]: null, // Not null
-              [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-            }
+              [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+            },
           },
           include: [
             {
               model: Item,
-              as: 'Item',
-              attributes: ['i_model', 'i_deviceID']
+              as: "Item",
+              attributes: ["i_model", "i_deviceID"],
             },
             {
               model: Member,
-              as: 'Member',
-              attributes: ['m_fname', 'm_lname']
-            }
+              as: "Member",
+              attributes: ["m_fname", "m_lname"],
+            },
           ],
-          order: [['b_date_returned', 'DESC']],
-          limit: 15
+          order: [["b_date_returned", "DESC"]],
+          limit: 15,
         });
 
         // Add return activities
         recentReturns.forEach((borrow: any) => {
-          const memberName = `${borrow.Member?.m_fname || 'Unknown'} ${borrow.Member?.m_lname || 'Member'}`;
-          const itemName = borrow.Item?.i_model || 'Unknown Item';
-          const deviceId = borrow.Item?.i_deviceID || 'N/A';
-          
+          const memberName = `${borrow.Member?.m_fname || "Unknown"} ${
+            borrow.Member?.m_lname || "Member"
+          }`;
+          const itemName = borrow.Item?.i_model || "Unknown Item";
+          const deviceId = borrow.Item?.i_deviceID || "N/A";
+
           activities.push({
             id: `return-${borrow.id}`,
-            type: 'return',
+            type: "return",
             description: `${memberName} returned ${itemName} (${deviceId})`,
-            date: borrow.b_date_returned
+            date: borrow.b_date_returned,
           });
         });
 
@@ -195,42 +204,51 @@ export async function GET(request: NextRequest) {
         const overdueForActivity = await Borrow.findAll({
           where: {
             b_status: 1, // Still borrowed
-            b_due_date: { [Op.lt]: new Date() }
+            b_due_date: { [Op.lt]: new Date() },
           },
           include: [
             {
               model: Item,
-              as: 'Item',
-              attributes: ['i_model', 'i_deviceID']
+              as: "Item",
+              attributes: ["i_model", "i_deviceID"],
             },
             {
               model: Member,
-              as: 'Member',
-              attributes: ['m_fname', 'm_lname']
-            }
+              as: "Member",
+              attributes: ["m_fname", "m_lname"],
+            },
           ],
-          order: [['b_due_date', 'ASC']],
-          limit: 5
+          order: [["b_due_date", "ASC"]],
+          limit: 5,
         });
 
         // Add overdue activities
         overdueForActivity.forEach((borrow: any) => {
-          const daysOverdue = Math.floor((new Date().getTime() - new Date(borrow.b_due_date).getTime()) / (1000 * 60 * 60 * 24));
-          const memberName = `${borrow.Member?.m_fname || 'Unknown'} ${borrow.Member?.m_lname || 'Member'}`;
-          const itemName = borrow.Item?.i_model || 'Unknown Item';
-          const deviceId = borrow.Item?.i_deviceID || 'N/A';
-          
+          const daysOverdue = Math.floor(
+            (new Date().getTime() - new Date(borrow.b_due_date).getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
+          const memberName = `${borrow.Member?.m_fname || "Unknown"} ${
+            borrow.Member?.m_lname || "Member"
+          }`;
+          const itemName = borrow.Item?.i_model || "Unknown Item";
+          const deviceId = borrow.Item?.i_deviceID || "N/A";
+
           activities.push({
             id: `overdue-${borrow.id}`,
-            type: 'overdue',
-            description: `${itemName} (${deviceId}) is ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} overdue - borrowed by ${memberName}`,
-            date: borrow.b_due_date
+            type: "overdue",
+            description: `${itemName} (${deviceId}) is ${daysOverdue} day${
+              daysOverdue > 1 ? "s" : ""
+            } overdue - borrowed by ${memberName}`,
+            date: borrow.b_due_date,
           });
         });
 
         // Sort all activities by date (most recent first) and limit to 15
         const recentActivity = activities
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          )
           .slice(0, 15);
 
         return NextResponse.json({
@@ -243,83 +261,85 @@ export async function GET(request: NextRequest) {
             overdueBorrows,
             returnedThisMonth: returnedBorrows,
             popularItems,
-            recentActivity
-          }
+            recentActivity,
+          },
         });
 
-      case 'detailed':
+      case "detailed":
         // Get detailed borrow records
         const detailedBorrows = await Borrow.findAll({
           where: whereClause,
           include: [
             {
               model: Item,
-              as: 'Item',
-              attributes: ['i_model', 'i_deviceID']
+              as: "Item",
+              attributes: ["i_model", "i_deviceID"],
             },
             {
               model: Member,
-              as: 'Member',
-              attributes: ['m_fname', 'm_lname']
+              as: "Member",
+              attributes: ["m_fname", "m_lname"],
             },
             {
               model: Room,
-              as: 'Room',
-              attributes: ['r_name']
-            }
+              as: "Room",
+              attributes: ["r_name"],
+            },
           ],
-          order: [['b_date_borrowed', 'DESC']]
+          order: [["b_date_borrowed", "DESC"]],
         });
 
         return NextResponse.json({
           success: true,
-          data: detailedBorrows
+          data: detailedBorrows,
         });
 
-      case 'overdue':
+      case "overdue":
         // Get overdue items
         const overdueItems = await Borrow.findAll({
           where: {
             ...whereClause,
             b_status: 1, // Still borrowed
-            b_due_date: { [Op.lt]: new Date() }
+            b_due_date: { [Op.lt]: new Date() },
           },
           include: [
             {
               model: Item,
-              as: 'Item',
-              attributes: ['i_model', 'i_deviceID']
+              as: "Item",
+              attributes: ["i_model", "i_deviceID"],
             },
             {
               model: Member,
-              as: 'Member',
-              attributes: ['m_fname', 'm_lname', 'm_contact']
+              as: "Member",
+              attributes: ["m_fname", "m_lname", "m_contact"],
             },
             {
               model: Room,
-              as: 'Room',
-              attributes: ['r_name']
-            }
+              as: "Room",
+              attributes: ["r_name"],
+            },
           ],
-          order: [['b_due_date', 'ASC']]
+          order: [["b_due_date", "ASC"]],
         });
 
         return NextResponse.json({
           success: true,
-          data: overdueItems
+          data: overdueItems,
         });
 
       default:
-        return NextResponse.json({
-          success: false,
-          error: 'Invalid report type'
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid report type",
+          },
+          { status: 400 }
+        );
     }
-
   } catch (error) {
-    console.error('Reports API error:', error);
+    console.error("Reports API error:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to generate report' },
+      { success: false, error: "Failed to generate report" },
       { status: 500 }
     );
   }

@@ -1,19 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
 
-import { Item } from '../../../../server/db/models';
-import { sequelize } from '../../../../server/db/models/database';
-import { Op } from 'sequelize';
-import { authOptions } from '@/lib/auth-config';
+import { Item } from "../../../../server/db/models";
+import { sequelize } from "../../../../server/db/models/database";
+import { Op } from "sequelize";
+import { authOptions } from "@/lib/auth-config";
 
 export async function GET(request: NextRequest) {
   try {
     await sequelize.authenticate();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const search = searchParams.get("search") || "";
 
     const offset = (page - 1) * limit;
 
@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
           { i_model: { [Op.like]: `%${search}%` } },
           { i_category: { [Op.like]: `%${search}%` } },
           { i_brand: { [Op.like]: `%${search}%` } },
-          { i_description: { [Op.like]: `%${search}%` } }
-        ]
+          { i_description: { [Op.like]: `%${search}%` } },
+        ],
       };
     }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       limit,
       offset,
-      order: [['id', 'DESC']]
+      order: [["id", "DESC"]],
     });
 
     return NextResponse.json({
@@ -43,14 +43,13 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total: count,
-        totalPages: Math.ceil(count / limit)
-      }
+        totalPages: Math.ceil(count / limit),
+      },
     });
-
   } catch (error) {
-    console.error('Get items error:', error);
+    console.error("Get items error:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch items' },
+      { success: false, error: "Failed to fetch items" },
       { status: 500 }
     );
   }
@@ -64,7 +63,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -79,22 +78,21 @@ export async function POST(request: NextRequest) {
       i_description: itemData.i_description,
       i_type: itemData.i_type,
       item_rawstock: itemData.item_rawstock,
-      i_status: 1,
+      i_status: itemData.i_status,
       i_mr: itemData.i_mr,
       i_price: itemData.i_price,
-      i_photo: 'default.jpg'
+      i_photo: itemData.i_photo || "default.jpg",
     });
 
     return NextResponse.json({
       success: true,
       data: newItem,
-      message: 'Item created successfully'
+      message: "Item created successfully",
     });
-
   } catch (error) {
-    console.error('Create item error:', error);
+    console.error("Create item error:", error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create item' },
+      { success: false, error: "Failed to create item" },
       { status: 500 }
     );
   }

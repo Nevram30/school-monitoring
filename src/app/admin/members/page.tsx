@@ -54,10 +54,9 @@ export default function MembersPage() {
       const response = await fetch(
         `/api/members?page=${pagination.page}&limit=${pagination.limit}&search=${search}`
       );
-      
+
       const data = await response.json();
       if (data.success) {
-        console.log('Members data received:', data.data);
         setMembers(data.data);
         setPagination(data.pagination);
       }
@@ -228,22 +227,20 @@ export default function MembersPage() {
                             {member.m_department}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              typeString === 'Student' 
-                                ? 'bg-blue-100 text-blue-800' 
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${typeString === 'Student'
+                                ? 'bg-blue-100 text-blue-800'
                                 : typeString === 'Faculty'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-purple-100 text-purple-800'
-                            }`}>
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-purple-100 text-purple-800'
+                              }`}>
                               {typeString}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              member.m_status === 1 
-                                ? 'bg-green-100 text-green-800' 
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${member.m_status === 1
+                                ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
-                            }`}>
+                              }`}>
                               {member.m_status === 1 ? 'Active' : 'Inactive'}
                             </span>
                           </td>
@@ -336,7 +333,7 @@ export default function MembersPage() {
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -351,7 +348,7 @@ export default function MembersPage() {
                         placeholder="Enter first name"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Last Name</label>
                       <input
@@ -364,7 +361,7 @@ export default function MembersPage() {
                         placeholder="Enter last name"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Middle Name</label>
                       <input
@@ -376,7 +373,7 @@ export default function MembersPage() {
                         placeholder="Enter middle name (optional)"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Contact Number</label>
                       <input
@@ -389,7 +386,7 @@ export default function MembersPage() {
                         placeholder="Enter contact number"
                       />
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700">Address</label>
                       <input
@@ -402,7 +399,7 @@ export default function MembersPage() {
                         placeholder="Enter address"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Member Type</label>
                       <select
@@ -418,7 +415,7 @@ export default function MembersPage() {
                       </select>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
