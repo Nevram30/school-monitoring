@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, MagnifyingGlassIcon, XMarkIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon, XMarkIcon, CheckCircleIcon, ExclamationCircleIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { Info, Copy, FileText, FileSpreadsheet, FileDown, Printer } from 'lucide-react';
 import Layout from '../Layout';
 
@@ -683,15 +683,20 @@ export default function ItemsPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="sm:flex sm:items-center">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-gray-900">Items</h1>
-            <p className="mt-2 text-sm text-gray-700">
-              Manage your school property items and inventory.
-            </p>
+        {/* Header with Breadcrumb */}
+        <div className="sm:flex sm:items-center sm:justify-between">
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <HomeIcon className="h-4 w-4 text-gray-400" />
+            <span>/</span>
+            <span className="text-gray-700 font-medium">Items</span>
+            {showDetailModal && (
+              <>
+                <span>/</span>
+                <span className="text-gray-700 font-medium">More Details</span>
+              </>
+            )}
           </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+          <div className="mt-4 sm:mt-0">
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
