@@ -14,12 +14,20 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
+    const roomId = searchParams.get("room_id");
 
     const offset = (page - 1) * limit;
 
-    let whereClause = {};
+    let whereClause: any = {};
+
+    // Add room_id filter if provided
+    if (roomId) {
+      whereClause.room_id = parseInt(roomId);
+    }
+
+    // Add search filter if provided
     if (search) {
-      whereClause = {
+      const searchCondition = {
         [Op.or]: [
           { i_model: { [Op.like]: `%${search}%` } },
           { i_category: { [Op.like]: `%${search}%` } },
@@ -27,6 +35,14 @@ export async function GET(request: NextRequest) {
           { i_description: { [Op.like]: `%${search}%` } },
         ],
       };
+
+      if (Object.keys(whereClause).length > 0) {
+        whereClause = {
+          [Op.and]: [whereClause, searchCondition],
+        };
+      } else {
+        whereClause = searchCondition;
+      }
     }
 
     const { count, rows } = await Item.findAndCountAll({

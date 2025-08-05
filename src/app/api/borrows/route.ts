@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-
-import { Borrow, Item, Member, Room } from "../../../../server/db/models";
 import { Op } from "sequelize";
+
+import { Borrow, Item, Room, Borrower } from "../../../../server/db/models";
 import { sequelize } from "../../../../server/db/models/database";
 import { authOptions } from "@/lib/auth-config";
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
           attributes: ["i_model", "i_deviceID"],
         },
         {
-          model: Member,
+          model: Borrower,
           as: "Member",
           attributes: ["m_fname", "m_lname"],
         },

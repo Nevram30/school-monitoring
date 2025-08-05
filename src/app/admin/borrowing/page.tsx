@@ -41,7 +41,7 @@ export default function BorrowingPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [items, setItems] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [borrowers, setBorrowers] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -67,7 +67,7 @@ export default function BorrowingPage() {
       const response = await fetch(
         `/api/borrows?page=${pagination.page}&limit=${pagination.limit}&search=${search}&status=${statusFilter}`
       );
-      
+
       const data = await response.json();
       if (data.success) {
         setBorrows(data.data);
@@ -115,21 +115,21 @@ export default function BorrowingPage() {
 
   const fetchDropdownData = async () => {
     try {
-      // Fetch items, members, and rooms
-      const [itemsRes, membersRes, roomsRes] = await Promise.all([
+      // Fetch items, borrowers, and rooms
+      const [itemsRes, borrowersRes, roomsRes] = await Promise.all([
         fetch('/api/items?limit=1000'),
-        fetch('/api/members?limit=1000'),
+        fetch('/api/borrowers?limit=1000'),
         fetch('/api/rooms?limit=1000')
       ]);
 
-      const [itemsData, membersData, roomsData] = await Promise.all([
+      const [itemsData, borrowersData, roomsData] = await Promise.all([
         itemsRes.json(),
-        membersRes.json(),
+        borrowersRes.json(),
         roomsRes.json()
       ]);
 
       if (itemsData.success) setItems(itemsData.data);
-      if (membersData.success) setMembers(membersData.data);
+      if (borrowersData.success) setBorrowers(borrowersData.data);
       if (roomsData.success) setRooms(roomsData.data);
     } catch (error) {
       console.error('Error fetching dropdown data:', error);
@@ -317,11 +317,10 @@ export default function BorrowingPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            isOverdue(borrow.b_due_date, borrow.b_status) 
-                              ? 'bg-red-100 text-red-800'
-                              : getStatusColor(borrow.b_status)
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${isOverdue(borrow.b_due_date, borrow.b_status)
+                            ? 'bg-red-100 text-red-800'
+                            : getStatusColor(borrow.b_status)
+                            }`}>
                             {isOverdue(borrow.b_due_date, borrow.b_status) ? 'Overdue' : getStatusString(borrow.b_status)}
                           </span>
                         </td>
@@ -410,7 +409,7 @@ export default function BorrowingPage() {
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -430,9 +429,9 @@ export default function BorrowingPage() {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Select Member</label>
+                      <label className="block text-sm font-medium text-gray-700">Select Borrower</label>
                       <select
                         name="b_memberid"
                         value={formData.b_memberid}
@@ -440,15 +439,15 @@ export default function BorrowingPage() {
                         required
                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="">Choose a member...</option>
-                        {members.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.m_fname} {member.m_lname} ({member.m_type})
+                        <option value="">Choose a borrower...</option>
+                        {borrowers.map((borrower: any) => (
+                          <option key={borrower.id} value={borrower.id}>
+                            {borrower.m_fname} {borrower.m_lname} ({borrower.m_type})
                           </option>
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Select Room</label>
                       <select
@@ -466,7 +465,7 @@ export default function BorrowingPage() {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Quantity</label>
                       <input
@@ -480,7 +479,7 @@ export default function BorrowingPage() {
                         placeholder="Enter quantity"
                       />
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700">Expected Return Date</label>
                       <input
@@ -494,7 +493,7 @@ export default function BorrowingPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"

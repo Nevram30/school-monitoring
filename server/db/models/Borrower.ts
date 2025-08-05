@@ -1,8 +1,7 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from './database';
+import { DataTypes, Model, Optional } from "sequelize";
+import { sequelize } from "./database";
 
-
-interface MemberAttributes {
+interface BorrowerAttributes {
   id: number;
   m_school_id: string;
   m_fname: string;
@@ -16,9 +15,13 @@ interface MemberAttributes {
   m_status: number;
 }
 
-interface MemberCreationAttributes extends Optional<MemberAttributes, 'id'> {}
+interface BorrowerCreationAttributes
+  extends Optional<BorrowerAttributes, "id"> {}
 
-class Member extends Model<MemberAttributes, MemberCreationAttributes> implements MemberAttributes {
+class Borrower
+  extends Model<BorrowerAttributes, BorrowerCreationAttributes>
+  implements BorrowerAttributes
+{
   public id!: number;
   public m_school_id!: string;
   public m_fname!: string;
@@ -35,7 +38,7 @@ class Member extends Model<MemberAttributes, MemberCreationAttributes> implement
   public readonly updatedAt!: Date;
 }
 
-Member.init(
+Borrower.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -86,9 +89,9 @@ Member.init(
   },
   {
     sequelize,
-    tableName: 'member',
+    tableName: "borrower",
     timestamps: false,
   }
 );
 
-export default Member;
+export default Borrower;

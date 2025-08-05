@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-config";
-import { Borrow, Item, Member, Room } from "../../../../server/db/models/index";
+import {
+  Borrow,
+  Item,
+  Borrower,
+  Room,
+} from "../../../../server/db/models/index";
 
 import { Op } from "sequelize";
 import { sequelize } from "../../../../server/db/models/database";
@@ -69,12 +74,12 @@ export async function GET(request: NextRequest) {
           limit: 10,
         });
 
-        // Get most active members
-        const mostActiveMembers = await Borrow.findAll({
+        // Get most active borrowers
+        const mostActiveBorrowers = await Borrow.findAll({
           where: whereClause,
           include: [
             {
-              model: Member,
+              model: Borrower,
               as: "Member",
               attributes: ["m_fname", "m_lname"],
             },
@@ -90,7 +95,7 @@ export async function GET(request: NextRequest) {
 
         // Get total counts for items, members, rooms
         const totalItems = await Item.count();
-        const totalMembers = await Member.count();
+        const totalMembers = await Borrower.count();
         const totalRooms = await Room.count();
 
         // Transform mostBorrowedItems to match frontend expectations
@@ -119,7 +124,7 @@ export async function GET(request: NextRequest) {
               required: false,
             },
             {
-              model: Member,
+              model: Borrower,
               as: "Member",
               attributes: ["m_fname", "m_lname"],
               required: false,
@@ -175,7 +180,7 @@ export async function GET(request: NextRequest) {
               attributes: ["i_model", "i_deviceID"],
             },
             {
-              model: Member,
+              model: Borrower,
               as: "Member",
               attributes: ["m_fname", "m_lname"],
             },
@@ -213,7 +218,7 @@ export async function GET(request: NextRequest) {
               attributes: ["i_model", "i_deviceID"],
             },
             {
-              model: Member,
+              model: Borrower,
               as: "Member",
               attributes: ["m_fname", "m_lname"],
             },
@@ -276,7 +281,7 @@ export async function GET(request: NextRequest) {
               attributes: ["i_model", "i_deviceID"],
             },
             {
-              model: Member,
+              model: Borrower,
               as: "Member",
               attributes: ["m_fname", "m_lname"],
             },
@@ -309,7 +314,7 @@ export async function GET(request: NextRequest) {
               attributes: ["i_model", "i_deviceID"],
             },
             {
-              model: Member,
+              model: Borrower,
               as: "Member",
               attributes: ["m_fname", "m_lname", "m_contact"],
             },

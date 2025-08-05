@@ -13,7 +13,7 @@ import Layout from '../Layout';
 
 interface DashboardStats {
   totalItems: number;
-  totalMembers: number;
+  totalBorrowers: number;
   totalRooms: number;
   activeBorrows: number;
   overdueBorrows: number;
@@ -44,7 +44,7 @@ interface RecentBorrow {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalItems: 0,
-    totalMembers: 0,
+    totalBorrowers: 0,
     totalRooms: 0,
     activeBorrows: 0,
     overdueBorrows: 0,
@@ -61,11 +61,11 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch comprehensive stats from reports API
       const reportsResponse = await fetch('/api/reports?type=summary');
       const reportsData = await reportsResponse.json();
-      
+
       // Fetch recent borrows for activity feed
       const borrowsResponse = await fetch('/api/borrows?limit=5');
       const borrowsData = await borrowsResponse.json();
@@ -73,13 +73,13 @@ export default function Dashboard() {
       if (reportsData.success) {
         setStats({
           totalItems: reportsData.data.totalItems || 0,
-          totalMembers: reportsData.data.totalMembers || 0,
+          totalBorrowers: reportsData.data.totalMembers || 0,
           totalRooms: reportsData.data.totalRooms || 0,
           activeBorrows: reportsData.data.activeBorrows || 0,
           overdueBorrows: reportsData.data.overdueBorrows || 0,
           returnedThisMonth: reportsData.data.returnedThisMonth || 0
         });
-        
+
         setRecentActivity(reportsData.data.recentActivity || []);
       }
 
@@ -102,11 +102,11 @@ export default function Dashboard() {
       href: '/dashboard/items'
     },
     {
-      name: 'Total Members',
-      value: stats.totalMembers,
+      name: 'Total Borrowers',
+      value: stats.totalBorrowers,
       icon: UsersIcon,
       color: 'bg-green-500',
-      href: '/dashboard/members'
+      href: '/dashboard/borrowers'
     },
     {
       name: 'Total Rooms',
@@ -178,18 +178,18 @@ export default function Dashboard() {
 
   const formatTimeAgo = (dateString: string) => {
     if (!dateString) return 'Unknown time';
-    
+
     const date = new Date(dateString);
     const now = new Date();
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) {
       return 'Invalid date';
     }
-    
+
     const diffInMs = now.getTime() - date.getTime();
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
       if (diffInMinutes < 1) {
@@ -289,7 +289,7 @@ export default function Dashboard() {
                     {recentActivity.map((activity, activityIdx) => {
                       const ActivityIcon = getActivityIcon(activity.type);
                       const activityColor = getActivityColor(activity.type);
-                      
+
                       return (
                         <li key={`activity-${activity.id}-${activityIdx}`}>
                           <div className="relative pb-8">
@@ -363,7 +363,7 @@ export default function Dashboard() {
               </button>
 
               <button
-                onClick={() => window.location.href = '/dashboard/members'}
+                onClick={() => window.location.href = '/admin/borrowers'}
                 className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 border border-gray-200 rounded-lg hover:border-green-300 transition-colors"
               >
                 <div>
@@ -374,10 +374,10 @@ export default function Dashboard() {
                 <div className="mt-8">
                   <h3 className="text-lg font-medium">
                     <span className="absolute inset-0" aria-hidden="true" />
-                    Manage Members
+                    Manage Borrowers
                   </h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    Add or view school members
+                    Add or view borrowers
                   </p>
                 </div>
               </button>

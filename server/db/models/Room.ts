@@ -1,6 +1,5 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from './database';
-
+import { DataTypes, Model, Optional } from "sequelize";
+import { sequelize } from "./database";
 
 interface RoomAttributes {
   id: number;
@@ -9,13 +8,19 @@ interface RoomAttributes {
   r_status: number;
 }
 
-interface RoomCreationAttributes extends Optional<RoomAttributes, 'id'> {}
+interface RoomCreationAttributes extends Optional<RoomAttributes, "id"> {}
 
-class Room extends Model<RoomAttributes, RoomCreationAttributes> implements RoomAttributes {
+class Room
+  extends Model<RoomAttributes, RoomCreationAttributes>
+  implements RoomAttributes
+{
   public id!: number;
   public r_name!: string;
   public r_description?: string;
   public r_status!: number;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 Room.init(
@@ -41,8 +46,8 @@ Room.init(
   },
   {
     sequelize,
-    tableName: 'room',
-    timestamps: false,
+    tableName: "room",
+    timestamps: true,
   }
 );
 

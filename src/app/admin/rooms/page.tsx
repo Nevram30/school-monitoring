@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, MagnifyingGlassIcon, XMarkIcon, PencilIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Layout from '../Layout';
+import Alert from '../../../components/ui-components/alert';
+import { useAlert } from '../../../components/ui-components/useAlert';
 
 interface Room {
   id: number;
@@ -10,6 +12,22 @@ interface Room {
   r_description?: string;
   r_status: number;
   createdAt: string;
+}
+
+interface Item {
+  id: number;
+  i_deviceID: string;
+  i_model: string;
+  i_category: string;
+  i_brand: string;
+  i_description: string;
+  i_type: string;
+  item_rawstock: number;
+  i_status: number;
+  i_mr: string;
+  i_price: number;
+  i_photo: string;
+  room_id?: number;
 }
 
 interface Pagination {
@@ -35,6 +53,16 @@ export default function RoomsPage() {
     r_name: '',
     r_description: ''
   });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewItemsModal, setShowViewItemsModal] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [roomItems, setRoomItems] = useState<Item[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    r_name: '',
+    r_description: ''
+  });
+  const { alert, showSuccess, showError, hideAlert } = useAlert();
 
   useEffect(() => {
     fetchRooms();
@@ -52,7 +80,7 @@ export default function RoomsPage() {
           }
         }
       );
-      
+
       const data = await response.json();
       if (data.success) {
         setRooms(data.data);
@@ -103,20 +131,110 @@ export default function RoomsPage() {
           r_description: ''
         });
         fetchRooms(); // Refresh the list
-        alert('Room added successfully!');
+        showSuccess('Room added successfully!');
       } else {
-        alert('Error adding room: ' + data.error);
+        showError('Error adding room: ' + data.error);
       }
     } catch (error) {
       console.error('Error adding room:', error);
-      alert('Error adding room');
+      showError('Error adding room');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleEditRoom = (room: Room) => {
+    setSelectedRoom(room);
+    setEditFormData({
+      r_name: room.r_name,
+      r_description: room.r_description || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRoom) return;
+
+    setSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/rooms/${selectedRoom.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setShowEditModal(false);
+        setSelectedRoom(null);
+        setEditFormData({
+          r_name: '',
+          r_description: ''
+        });
+        fetchRooms(); // Refresh the list
+        showSuccess('Room updated successfully!');
+      } else {
+        showError('Error updating room: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error updating room:', error);
+      showError('Error updating room');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleViewItems = async (room: Room) => {
+    setSelectedRoom(room);
+    setShowViewItemsModal(true);
+    setItemsLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/rooms/${room.id}/items`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setRoomItems(data.data || []);
+      } else {
+        showError('Error fetching room items: ' + data.error);
+        setRoomItems([]);
+      }
+    } catch (error) {
+      console.error('Error fetching room items:', error);
+      showError('Error fetching room items');
+      setRoomItems([]);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
   return (
     <Layout>
+      {/* Alert Component */}
+      <Alert
+        type={alert.type}
+        title={alert.title}
+        message={alert.message}
+        isVisible={alert.isVisible}
+        onClose={hideAlert}
+      />
+
       <div className="space-y-6">
         {/* Header */}
         <div className="sm:flex sm:items-center">
@@ -185,10 +303,13 @@ export default function RoomsPage() {
                         Description
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -201,17 +322,34 @@ export default function RoomsPage() {
                         <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
                           {room.r_description || 'No description'}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {room.createdAt ? new Date(room.createdAt).toLocaleDateString() : 'N/A'}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            room.r_status === 1 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${room.r_status === 1
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                            }`}>
                             {room.r_status === 1 ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(room.createdAt).toLocaleDateString()}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleEditRoom(room)}
+                              className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              <PencilIcon className="h-3 w-3 mr-1" />
+                              Edit Room
+                            </button>
+                            <button
+                              onClick={() => handleViewItems(room)}
+                              className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            >
+                              <EyeIcon className="h-3 w-3 mr-1" />
+                              View Items
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -298,7 +436,7 @@ export default function RoomsPage() {
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Room Name</label>
@@ -312,7 +450,7 @@ export default function RoomsPage() {
                       placeholder="Enter room name (e.g., Room 101, Computer Lab)"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Description</label>
                     <textarea
@@ -324,7 +462,7 @@ export default function RoomsPage() {
                       placeholder="Enter room description (optional)"
                     />
                   </div>
-                  
+
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
@@ -342,6 +480,212 @@ export default function RoomsPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Room Modal */}
+        {showEditModal && selectedRoom && (
+          <div className="fixed inset-0 bg-gray-600/25 bg-opacity-20 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Edit Room</h3>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setSelectedRoom(null);
+                      setEditFormData({ r_name: '', r_description: '' });
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Room Name</label>
+                    <input
+                      type="text"
+                      name="r_name"
+                      value={editFormData.r_name}
+                      onChange={handleEditInputChange}
+                      required
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter room name (e.g., Room 101, Computer Lab)"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea
+                      name="r_description"
+                      value={editFormData.r_description}
+                      onChange={handleEditInputChange}
+                      rows={3}
+                      className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter room description (optional)"
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setSelectedRoom(null);
+                        setEditFormData({ r_name: '', r_description: '' });
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      {submitting ? 'Updating...' : 'Update Room'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Items Modal */}
+        {showViewItemsModal && selectedRoom && (
+          <div className="fixed inset-0 bg-gray-600/25 bg-opacity-20 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-4/5 lg:w-3/4 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Items Currently Borrowed to {selectedRoom.r_name}</h3>
+                    <p className="text-sm text-gray-500">View all items currently borrowed and assigned to this room</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowViewItemsModal(false);
+                      setSelectedRoom(null);
+                      setRoomItems([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {itemsLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    {roomItems.length > 0 ? (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Photo
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Device ID
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Model
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Category
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Brand
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Quantity Borrowed
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Date Borrowed
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Due Date
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {roomItems.map((item) => (
+                            <tr key={item.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="h-16 w-16 flex-shrink-0">
+                                  <img
+                                    className="h-16 w-16 rounded-md object-cover border border-gray-300"
+                                    src={item.i_photo && item.i_photo !== 'default.jpg'
+                                      ? `/uploads/items/${item.i_photo}`
+                                      : '/uploads/items/default.jpg'}
+                                    alt={item.i_model}
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.src = '/uploads/items/default.jpg';
+                                    }}
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {item.i_deviceID}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {item.i_model}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {item.i_category}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {item.i_brand}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {(item as any).borrow_quantity || 1}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {(item as any).date_borrowed ? new Date((item as any).date_borrowed).toLocaleDateString() : 'N/A'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div className={(item as any).due_date && new Date((item as any).due_date) < new Date() ? 'text-red-600 font-medium' : ''}>
+                                  {(item as any).due_date ? new Date((item as any).due_date).toLocaleDateString() : 'N/A'}
+                                  {(item as any).due_date && new Date((item as any).due_date) < new Date() && (
+                                    <div className="text-xs text-red-500">Overdue</div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="text-center py-12">
+                        <EyeIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No borrowed items found</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          This room doesn't have any items currently borrowed to it.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    onClick={() => {
+                      setShowViewItemsModal(false);
+                      setSelectedRoom(null);
+                      setRoomItems([]);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>

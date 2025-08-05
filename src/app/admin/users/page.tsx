@@ -11,7 +11,7 @@ interface User {
   id: number;
   name: string;
   username: string;
-  type: number;
+  role: 'admin' | 'staff' | 'faculty';
   status: number;
 }
 
@@ -41,12 +41,12 @@ export default function UsersPage() {
     name: '',
     username: '',
     password: '',
-    type: '2' // Default to staff
+    role: 'staff' as 'admin' | 'staff' | 'faculty'
   });
 
   useEffect(() => {
     if (status === 'loading') return;
-    
+
     if (!session) {
       router.push('/login');
       return;
@@ -66,7 +66,7 @@ export default function UsersPage() {
       const response = await fetch(
         `/api/users?page=${pagination.page}&limit=${pagination.limit}&search=${search}`
       );
-      
+
       const data = await response.json();
       if (data.success) {
         setUsers(data.data);
@@ -114,7 +114,7 @@ export default function UsersPage() {
           name: '',
           username: '',
           password: '',
-          type: '2'
+          role: 'staff'
         });
         fetchUsers(); // Refresh the list
         alert('User created successfully!');
@@ -156,21 +156,6 @@ export default function UsersPage() {
     }
   };
 
-  const getUserTypeLabel = (type: number) => {
-    switch (type) {
-      case 1: return 'Admin';
-      case 2: return 'Staff';
-      default: return 'Unknown';
-    }
-  };
-
-  const getUserTypeColor = (type: number) => {
-    switch (type) {
-      case 1: return 'bg-red-100 text-red-800';
-      case 2: return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   if (status === 'loading' || loading) {
     return (
@@ -247,7 +232,7 @@ export default function UsersPage() {
                       Username
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
+                      Role
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -267,16 +252,20 @@ export default function UsersPage() {
                         {user.username}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUserTypeColor(user.type)}`}>
-                          {getUserTypeLabel(user.type)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin'
+                            ? 'bg-red-100 text-red-800'
+                            : user.role === 'faculty'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.status === 1 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.status === 1
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {user.status === 1 ? 'Active' : 'Inactive'}
                         </span>
                       </td>
@@ -380,7 +369,7 @@ export default function UsersPage() {
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Full Name</label>
@@ -394,7 +383,7 @@ export default function UsersPage() {
                       placeholder="Enter full name"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Username</label>
                     <input
@@ -407,7 +396,7 @@ export default function UsersPage() {
                       placeholder="Enter username"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Password</label>
                     <input
@@ -420,21 +409,22 @@ export default function UsersPage() {
                       placeholder="Enter password"
                     />
                   </div>
-                  
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">User Type</label>
+                    <label className="block text-sm font-medium text-gray-700">Role</label>
                     <select
-                      name="type"
-                      value={formData.type}
+                      name="role"
+                      value={formData.role}
                       onChange={handleInputChange}
                       required
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="2">Staff</option>
-                      <option value="1">Admin</option>
+                      <option value="staff">Staff</option>
+                      <option value="faculty">Faculty</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
-                  
+
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"

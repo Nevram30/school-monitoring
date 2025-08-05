@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 
-import { Member } from "../../../../server/db/models";
+import { Borrower } from "../../../../server/db/models";
 import { sequelize } from "../../../../server/db/models/database";
 import { Op } from "sequelize";
 import { authOptions } from "@/lib/auth-config";
+import {
+  generateBorrowerIdByType,
+  getBorrowerTypeFromString,
+} from "../../../../server/db/utils/borrowerIdGenerator";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,7 +33,7 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const { count, rows } = await Member.findAndCountAll({
+    const { count, rows } = await Borrower.findAndCountAll({
       where: whereClause,
       limit,
       offset,
@@ -47,7 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Get members error:", error);
+    console.error("Get borrowers error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -56,7 +60,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  let memberData: any = null;
+  let borrowerData: any = null;
 
   try {
     await sequelize.authenticate();
@@ -70,53 +74,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    memberData = await request.json();
+    borrowerData = await request.json();
 
-    // Convert member type to integer
-    const getTypeNumber = (type: string) => {
-      switch (type.toLowerCase()) {
-        case "student":
-          return 1;
-        case "faculty":
-          return 2;
-        case "staff":
-          return 3;
-        default:
-          return 1;
-      }
-    };
+    // Convert borrower type string to integer
+    const borrowerType = getBorrowerTypeFromString(borrowerData.m_type);
 
-    const memberToCreate = {
-      m_school_id: Date.now().toString(), // Generate a unique school ID as string
-      m_fname: memberData.m_fname,
-      m_lname: memberData.m_lname,
+    // Generate custom ID based on borrower type
+    const customSchoolId = await generateBorrowerIdByType(borrowerType);
+
+    const borrowerToCreate = {
+      m_school_id: customSchoolId, // Generate custom ID based on borrower type
+      m_fname: borrowerData.m_fname,
+      m_lname: borrowerData.m_lname,
       m_gender: "N/A", // Default value since frontend doesn't collect this (max 10 chars)
-      m_contact: memberData.m_contact || "",
-      m_department: memberData.m_address || "General", // Using address field as department for now
+      m_contact: borrowerData.m_contact || "",
+      m_department: borrowerData.m_address || "General", // Using address field as department for now
       m_year_section: "N/A", // Default value since frontend doesn't collect this
-      m_type: getTypeNumber(memberData.m_type),
+      m_type: borrowerType,
       m_password: "", // Default empty password
       m_status: 1,
     };
 
-    const newMember = await Member.create(memberToCreate);
+    const newBorrower = await Borrower.create(borrowerToCreate);
 
     return NextResponse.json({
       success: true,
-      data: newMember,
-      message: "Member created successfully",
+      data: newBorrower,
+      message: "Borrower created successfully",
     });
   } catch (error) {
-    console.error("Create member error:", error);
+    console.error("Create borrower error:", error);
     console.error(
       "Error details:",
       error instanceof Error ? error.message : "Unknown error"
     );
-    console.error("Member data received:", memberData);
+    console.error("Borrower data received:", borrowerData);
     return NextResponse.json(
       {
         success: false,
-        error: `Failed to create member: ${
+        error: `Failed to create borrower: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
       },
