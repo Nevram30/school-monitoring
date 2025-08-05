@@ -28,6 +28,11 @@ export default function AdminAsidecomponent() {
             icon: '📦'
         },
         {
+            href: '/admin/inventory',
+            label: 'Inventory',
+            icon: '📋'
+        },
+        {
             href: '/admin/borrowing',
             label: 'Transactions',
             icon: '📋'
