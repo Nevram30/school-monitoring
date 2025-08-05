@@ -79,8 +79,6 @@ export async function POST(request: NextRequest) {
       r_status: 1,
     };
 
-    console.log("Creating room with data:", roomToCreate);
-
     const room = await Room.create(roomToCreate);
 
     return NextResponse.json({

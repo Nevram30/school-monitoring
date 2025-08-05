@@ -143,13 +143,6 @@ export async function GET(request: NextRequest) {
 
         // Add borrow activities
         recentBorrows.forEach((borrow: any) => {
-          console.log("Processing borrow:", {
-            id: borrow.id,
-            member: borrow.Member,
-            item: borrow.Item,
-            date: borrow.b_date_borrowed,
-          });
-
           const memberName = `${borrow.Member?.m_fname || "Unknown"} ${
             borrow.Member?.m_lname || "Member"
           }`;
