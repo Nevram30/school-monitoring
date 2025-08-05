@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth-config";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await sequelize.authenticate();
@@ -21,7 +21,8 @@ export async function GET(
       );
     }
 
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
     if (isNaN(roomId)) {
       return NextResponse.json(
         { success: false, error: "Invalid room ID" },

@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth-config";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   let roomData: any = null;
 
@@ -23,7 +23,8 @@ export async function PUT(
       );
     }
 
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
     if (isNaN(roomId)) {
       return NextResponse.json(
         { success: false, error: "Invalid room ID" },

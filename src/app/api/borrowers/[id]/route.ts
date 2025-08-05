@@ -8,12 +8,13 @@ import { getBorrowerTypeFromString } from "../../../../../server/db/utils/borrow
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await sequelize.authenticate();
 
-    const borrowerId = parseInt(params.id);
+    const { id } = await params;
+    const borrowerId = parseInt(id);
     if (isNaN(borrowerId)) {
       return NextResponse.json(
         { success: false, error: "Invalid borrower ID" },
@@ -45,7 +46,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await sequelize.authenticate();
@@ -59,7 +60,8 @@ export async function PUT(
       );
     }
 
-    const borrowerId = parseInt(params.id);
+    const { id } = await params;
+    const borrowerId = parseInt(id);
     if (isNaN(borrowerId)) {
       return NextResponse.json(
         { success: false, error: "Invalid borrower ID" },
@@ -112,7 +114,7 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await sequelize.authenticate();
@@ -126,7 +128,8 @@ export async function PATCH(
       );
     }
 
-    const borrowerId = parseInt(params.id);
+    const { id } = await params;
+    const borrowerId = parseInt(id);
     if (isNaN(borrowerId)) {
       return NextResponse.json(
         { success: false, error: "Invalid borrower ID" },
@@ -169,7 +172,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await sequelize.authenticate();
@@ -183,7 +186,8 @@ export async function DELETE(
       );
     }
 
-    const borrowerId = parseInt(params.id);
+    const { id } = await params;
+    const borrowerId = parseInt(id);
     if (isNaN(borrowerId)) {
       return NextResponse.json(
         { success: false, error: "Invalid borrower ID" },
