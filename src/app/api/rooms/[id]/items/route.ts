@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 
-import { Borrow, Item } from "../../../../../../server/db/models";
+import { Borrow, Item, Borrower } from "../../../../../../server/db/models";
 import { sequelize } from "../../../../../../server/db/models/database";
 import { authOptions } from "@/lib/auth-config";
 
@@ -55,6 +55,21 @@ export async function GET(
             "i_photo",
           ],
         },
+        {
+          model: Borrower,
+          as: "Member",
+          attributes: [
+            "id",
+            "m_school_id",
+            "m_fname",
+            "m_lname",
+            "m_gender",
+            "m_contact",
+            "m_department",
+            "m_year_section",
+            "m_type",
+          ],
+        },
       ],
       order: [["b_date_borrowed", "DESC"]],
     });
@@ -69,6 +84,10 @@ export async function GET(
         date_borrowed: borrowData.b_date_borrowed,
         due_date: borrowData.b_due_date,
         room_id: borrowData.room_id,
+        borrow_purpose: borrowData.b_purpose,
+        borrow_notes: borrowData.b_notes,
+        borrow_status: borrowData.b_status,
+        borrower: borrowData.Member,
       };
     });
 

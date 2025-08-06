@@ -28,6 +28,24 @@ interface Item {
   i_price: number;
   i_photo: string;
   room_id?: number;
+  borrow_id?: number;
+  borrow_quantity?: number;
+  date_borrowed?: string;
+  due_date?: string;
+  borrow_purpose?: string;
+  borrow_notes?: string;
+  borrow_status?: number;
+  borrower?: {
+    id: number;
+    m_school_id: string;
+    m_fname: string;
+    m_lname: string;
+    m_gender: string;
+    m_contact: string;
+    m_department: string;
+    m_year_section: string;
+    m_type: number;
+  };
 }
 
 interface Pagination {
@@ -588,73 +606,133 @@ export default function RoomsPage() {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Photo
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Item Details
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Device ID
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Borrower
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Model
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Borrow Details
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Category
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Purpose & Notes
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Brand
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Quantity Borrowed
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date Borrowed
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Due Date
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
                             </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {roomItems.map((item) => (
-                            <tr key={item.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="h-16 w-16 flex-shrink-0">
-                                  <img
-                                    className="h-16 w-16 rounded-md object-cover border border-gray-300"
-                                    src={item.i_photo && item.i_photo !== 'default.jpg'
-                                      ? `/uploads/items/${item.i_photo}`
-                                      : '/uploads/items/default.jpg'}
-                                    alt={item.i_model}
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.src = '/uploads/items/default.jpg';
-                                    }}
-                                  />
+                            <tr key={`${item.borrow_id}-${item.id}`} className="hover:bg-gray-50">
+                              <td className="px-4 py-4">
+                                <div className="flex items-center space-x-4">
+                                  <div className="h-16 w-16 flex-shrink-0">
+                                    <img
+                                      className="h-16 w-16 rounded-md object-cover border border-gray-300"
+                                      src={item.i_photo && item.i_photo !== 'default.jpg'
+                                        ? `/uploads/items/${item.i_photo}`
+                                        : '/uploads/items/default.jpg'}
+                                      alt={item.i_model}
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = '/uploads/items/default.jpg';
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="text-sm font-medium text-gray-900 truncate">
+                                      {item.i_deviceID}
+                                    </div>
+                                    <div className="text-sm text-gray-500 truncate">
+                                      {item.i_model}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      {item.i_category} • {item.i_brand}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {item.i_deviceID}
+                              <td className="px-4 py-4">
+                                <div className="text-sm">
+                                  <div className="font-medium text-gray-900">
+                                    {item.borrower ? `${item.borrower.m_fname} ${item.borrower.m_lname}` : 'Unknown'}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    ID: {item.borrower?.m_school_id || 'N/A'}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {item.borrower?.m_department}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {item.borrower?.m_year_section}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {item.borrower?.m_contact}
+                                  </div>
+                                </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.i_model}
+                              <td className="px-4 py-4">
+                                <div className="text-sm space-y-1">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Quantity:</span>
+                                    <span className="font-medium">{item.borrow_quantity || 1}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Borrowed:</span>
+                                    <span className="text-gray-900">
+                                      {item.date_borrowed ? new Date(item.date_borrowed).toLocaleDateString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-500">Due:</span>
+                                    <span className={item.due_date && new Date(item.due_date) < new Date() ? 'text-red-600 font-medium' : 'text-gray-900'}>
+                                      {item.due_date ? new Date(item.due_date).toLocaleDateString() : 'N/A'}
+                                    </span>
+                                  </div>
+                                  {item.due_date && new Date(item.due_date) < new Date() && (
+                                    <div className="text-xs text-red-600 font-medium">
+                                      Overdue by {Math.floor((new Date().getTime() - new Date(item.due_date).getTime()) / (1000 * 60 * 60 * 24))} day(s)
+                                    </div>
+                                  )}
+                                </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.i_category}
+                              <td className="px-4 py-4">
+                                <div className="text-sm space-y-2 max-w-xs">
+                                  {item.borrow_purpose && (
+                                    <div>
+                                      <div className="text-xs text-gray-500 font-medium">Purpose:</div>
+                                      <div className="text-gray-900 text-xs leading-relaxed break-words">
+                                        {item.borrow_purpose}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {item.borrow_notes && (
+                                    <div>
+                                      <div className="text-xs text-gray-500 font-medium">Notes:</div>
+                                      <div className="text-gray-700 text-xs leading-relaxed break-words">
+                                        {item.borrow_notes}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {!item.borrow_purpose && !item.borrow_notes && (
+                                    <div className="text-xs text-gray-400 italic">No purpose or notes specified</div>
+                                  )}
+                                </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {item.i_brand}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {(item as any).borrow_quantity || 1}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {(item as any).date_borrowed ? new Date((item as any).date_borrowed).toLocaleDateString() : 'N/A'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <div className={(item as any).due_date && new Date((item as any).due_date) < new Date() ? 'text-red-600 font-medium' : ''}>
-                                  {(item as any).due_date ? new Date((item as any).due_date).toLocaleDateString() : 'N/A'}
-                                  {(item as any).due_date && new Date((item as any).due_date) < new Date() && (
-                                    <div className="text-xs text-red-500">Overdue</div>
+                              <td className="px-4 py-4">
+                                <div className="flex flex-col space-y-2">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.borrow_status === 1
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {item.borrow_status === 1 ? 'Borrowed' : 'Unknown Status'}
+                                  </span>
+                                  {item.due_date && new Date(item.due_date) < new Date() && (
+                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                      Overdue
+                                    </span>
                                   )}
                                 </div>
                               </td>
