@@ -134,13 +134,6 @@ export async function GET(request: NextRequest) {
           limit: 15,
         });
 
-        if (recentBorrows.length > 0) {
-          console.log(
-            "First borrow sample:",
-            JSON.stringify(recentBorrows[0], null, 2)
-          );
-        }
-
         // Add borrow activities
         recentBorrows.forEach((borrow: any) => {
           const memberName = `${borrow.Member?.m_fname || "Unknown"} ${

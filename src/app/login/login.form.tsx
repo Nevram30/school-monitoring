@@ -79,7 +79,6 @@ const SignInForm: React.FC = () => {
 
       setLoginError(false)
     } catch (error) {
-      console.log(error)
       console.error(error)
     } finally {
       setIsSubmitting(false)
