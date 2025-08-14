@@ -71,6 +71,35 @@ export default function RoomsPage() {
     r_name: '',
     r_description: ''
   });
+
+  // Floor and room options organized by floor
+  const floorRoomOptions = {
+    "2nd Floor": [
+      "Library", "Speech Laboratory", "Clinic", "Fundamental Laboratory", "LRC",
+      "Nursing Faculty", "Guidance Office", "Presidents Office", "D21", "D22", "D23"
+    ],
+    "3rd Floor": [
+      "A31", "SHS Faculty", "A35", "A36", "B31", "B32", "C31", "C32",
+      "C33", "C34", "C35", "C36", "D31", "D32", "D33"
+    ],
+    "4th Floor": [
+      "AVR", "CSS LAB", "CISCO LAB", "Computer Lab 1", "Internet Lab", "Computer Lab 2",
+      "B41", "B42", "B43", "B44", "C41", "D41", "D42", "D43", "HRM Laboratory"
+    ],
+    "5th Floor": [
+      "A51", "A52", "A53", "A54", "A55", "A56", "B51", "B52", "B53", "B54",
+      "C51", "C52", "C53", "C54", "C55", "C56", "D52", "D53"
+    ],
+    "6th Floor": [
+      "PE Room", "B61", "B62", "B63", "B64", "Digital Lab", "Energy Conversion Lab",
+      "Physics Lab", "Drawing Room 1", "Drawing Room 2", "Stock Room", "Criminology Lab",
+      "D61", "D62", "D63"
+    ],
+    "7th Floor": [
+      "B71", "B72", "B73", "B74", "Anatomy Lab", "Microbiology Lab",
+      "Chem Lab", "Biochem Lab", "D71", "D72", "D73"
+    ]
+  };
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewItemsModal, setShowViewItemsModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -121,7 +150,7 @@ export default function RoomsPage() {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -457,16 +486,25 @@ export default function RoomsPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Room Name</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm font-medium text-gray-700">Select Room</label>
+                    <select
                       name="r_name"
                       value={formData.r_name}
                       onChange={handleInputChange}
                       required
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter room name (e.g., Room 101, Computer Lab)"
-                    />
+                    >
+                      <option value="">Choose a room...</option>
+                      {Object.entries(floorRoomOptions).map(([floor, rooms]) => (
+                        <optgroup key={floor} label={floor}>
+                          {rooms.map((room) => (
+                            <option key={`${floor}-${room}`} value={room}>
+                              {room}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
@@ -724,8 +762,8 @@ export default function RoomsPage() {
                               <td className="px-4 py-4">
                                 <div className="flex flex-col space-y-2">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.borrow_status === 1
-                                      ? 'bg-yellow-100 text-yellow-800'
-                                      : 'bg-gray-100 text-gray-800'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
                                     }`}>
                                     {item.borrow_status === 1 ? 'Borrowed' : 'Unknown Status'}
                                   </span>
