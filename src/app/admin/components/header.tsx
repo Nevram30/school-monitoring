@@ -19,9 +19,9 @@ export default function AdminHeader() {
         <header className="bg-white border-b border-gray-200 px-6 py-3">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-semibold text-gray-800">SCHOOL PROPERTY MONITORING SYSTEM</h1>
+                    <h1 className="text-2xl font-semibold text-gray-800"></h1>
                 </div>
-                
+
                 <div className="relative">
                     <button
                         onClick={toggleDropdown}
