@@ -7,7 +7,11 @@ import {
   BuildingOfficeIcon,
   ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  PlusIcon,
+  EyeIcon,
+  DocumentArrowDownIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import Layout from '../Layout';
 
@@ -41,6 +45,18 @@ interface RecentBorrow {
   b_status: number;
 }
 
+interface QuickActionModal {
+  type: 'item' | 'borrower' | 'borrow' | 'room' | null;
+  isOpen: boolean;
+}
+
+interface QuickStats {
+  lowStockItems: number;
+  pendingReturns: number;
+  newBorrowersThisWeek: number;
+  availableRooms: number;
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalItems: 0,
@@ -53,6 +69,13 @@ export default function Dashboard() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [recentBorrows, setRecentBorrows] = useState<RecentBorrow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<QuickActionModal>({ type: null, isOpen: false });
+  const [quickStats, setQuickStats] = useState<QuickStats>({
+    lowStockItems: 0,
+    pendingReturns: 0,
+    newBorrowersThisWeek: 0,
+    availableRooms: 0
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -207,6 +230,65 @@ export default function Dashboard() {
     }
   };
 
+  const openModal = (type: 'item' | 'borrower' | 'borrow' | 'room') => {
+    setModal({ type, isOpen: true });
+  };
+
+  const closeModal = () => {
+    setModal({ type: null, isOpen: false });
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'add-item':
+        window.location.href = '/admin/items';
+        break;
+      case 'add-borrower':
+        window.location.href = '/admin/borrowers';
+        break;
+      case 'new-borrow':
+        window.location.href = '/admin/borrowing';
+        break;
+      case 'add-room':
+        window.location.href = '/admin/rooms';
+        break;
+      case 'view-reports':
+        window.location.href = '/admin/reports';
+        break;
+      case 'generate-report':
+        // Generate quick report
+        const reportData = {
+          totalItems: stats.totalItems,
+          activeBorrows: stats.activeBorrows,
+          overdueBorrows: stats.overdueBorrows,
+          returnedThisMonth: stats.returnedThisMonth
+        };
+        console.log('Quick report generated:', reportData);
+        alert('Quick report generated! Check console for details.');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const exportData = (type: string) => {
+    // Export functionality
+    const data = {
+      stats,
+      recentActivity,
+      timestamp: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dashboard-${type}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
 
   return (
     <Layout>
@@ -338,129 +420,199 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <button
-                onClick={() => window.location.href = '/dashboard/items'}
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-blue-50 text-blue-700 ring-4 ring-white">
-                    <CubeIcon className="h-6 w-6" />
-                  </span>
-                </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    Manage Items
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Add, edit, or view inventory items
-                  </p>
-                </div>
-              </button>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
+                Quick Actions
+              </h3>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleQuickAction('generate-report')}
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                  Quick Report
+                </button>
+                <button
+                  onClick={() => exportData('summary')}
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                  Export Data
+                </button>
+              </div>
+            </div>
 
-              <button
-                onClick={() => window.location.href = '/admin/borrowers'}
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 border border-gray-200 rounded-lg hover:border-green-300 transition-colors"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-green-50 text-green-700 ring-4 ring-white">
-                    <UsersIcon className="h-6 w-6" />
-                  </span>
+            {/* Primary Actions */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+              <div className="relative group bg-gradient-to-br from-blue-50 to-blue-100 p-6 border border-blue-200 rounded-lg hover:shadow-md transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="rounded-lg inline-flex p-3 bg-blue-500 text-white ring-4 ring-white">
+                        <PlusIcon className="h-6 w-6" />
+                      </span>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Add New</h3>
+                        <p className="text-sm text-gray-600">Create new records</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    Manage Borrowers
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Add or view borrowers
-                  </p>
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={() => handleQuickAction('add-item')}
+                    className="flex-1 bg-white text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium border border-blue-200 transition-colors"
+                  >
+                    Item
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('add-borrower')}
+                    className="flex-1 bg-white text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium border border-blue-200 transition-colors"
+                  >
+                    Borrower
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('add-room')}
+                    className="flex-1 bg-white text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium border border-blue-200 transition-colors"
+                  >
+                    Room
+                  </button>
                 </div>
-              </button>
+              </div>
 
-              <button
-                onClick={() => window.location.href = '/dashboard/borrowing'}
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
-                    <ClipboardDocumentListIcon className="h-6 w-6" />
-                  </span>
+              <div className="relative group bg-gradient-to-br from-green-50 to-green-100 p-6 border border-green-200 rounded-lg hover:shadow-md transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="rounded-lg inline-flex p-3 bg-green-500 text-white ring-4 ring-white">
+                        <ClipboardDocumentListIcon className="h-6 w-6" />
+                      </span>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Process</h3>
+                        <p className="text-sm text-gray-600">Handle transactions</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={() => handleQuickAction('new-borrow')}
+                    className="flex-1 bg-white text-green-700 hover:bg-green-50 px-3 py-2 rounded-md text-sm font-medium border border-green-200 transition-colors"
+                  >
                     New Borrow
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Create a new borrowing transaction
-                  </p>
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/admin/borrowing'}
+                    className="flex-1 bg-white text-green-700 hover:bg-green-50 px-3 py-2 rounded-md text-sm font-medium border border-green-200 transition-colors"
+                  >
+                    Returns
+                  </button>
                 </div>
-              </button>
+              </div>
 
-              <button
-                onClick={() => window.location.href = '/dashboard/reports'}
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 border border-gray-200 rounded-lg hover:border-yellow-300 transition-colors"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-yellow-50 text-yellow-700 ring-4 ring-white">
-                    <BuildingOfficeIcon className="h-6 w-6" />
-                  </span>
+              <div className="relative group bg-gradient-to-br from-purple-50 to-purple-100 p-6 border border-purple-200 rounded-lg hover:shadow-md transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="rounded-lg inline-flex p-3 bg-purple-500 text-white ring-4 ring-white">
+                        <EyeIcon className="h-6 w-6" />
+                      </span>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-semibold text-gray-900">View & Manage</h3>
+                        <p className="text-sm text-gray-600">Browse and manage data</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    View Reports
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Generate analytics and reports
-                  </p>
+                <div className="mt-4 flex space-x-2">
+                  <button
+                    onClick={() => window.location.href = '/admin/items'}
+                    className="flex-1 bg-white text-purple-700 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium border border-purple-200 transition-colors"
+                  >
+                    Items
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('view-reports')}
+                    className="flex-1 bg-white text-purple-700 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium border border-purple-200 transition-colors"
+                  >
+                    Reports
+                  </button>
                 </div>
-              </button>
+              </div>
+            </div>
 
-              <button
-                onClick={() => window.location.href = '/dashboard/users'}
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 border border-gray-200 rounded-lg hover:border-indigo-300 transition-colors"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-700 ring-4 ring-white">
-                    <UsersIcon className="h-6 w-6" />
-                  </span>
-                </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    Manage Users
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Add, edit, or delete system users
-                  </p>
-                </div>
-              </button>
+            {/* Secondary Actions */}
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">More Actions</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                <button
+                  onClick={() => window.location.href = '/admin/borrowers'}
+                  className="flex flex-col items-center p-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <UsersIcon className="h-6 w-6 mb-1" />
+                  Borrowers
+                </button>
+                <button
+                  onClick={() => window.location.href = '/admin/rooms'}
+                  className="flex flex-col items-center p-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <BuildingOfficeIcon className="h-6 w-6 mb-1" />
+                  Rooms
+                </button>
+                <button
+                  onClick={() => window.location.href = '/admin/users'}
+                  className="flex flex-col items-center p-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <UsersIcon className="h-6 w-6 mb-1" />
+                  Users
+                </button>
+                <button
+                  onClick={() => window.location.href = '/admin/reports'}
+                  className="flex flex-col items-center p-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <DocumentArrowDownIcon className="h-6 w-6 mb-1" />
+                  Reports
+                </button>
+                <button
+                  onClick={fetchDashboardData}
+                  className="flex flex-col items-center p-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <svg className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </button>
+                <button
+                  onClick={() => exportData('full')}
+                  className="flex flex-col items-center p-3 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <DocumentArrowDownIcon className="h-6 w-6 mb-1" />
+                  Export
+                </button>
+              </div>
+            </div>
 
-              <button
-                onClick={() => window.location.href = '/dashboard/rooms'}
-                className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-500 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors"
-              >
-                <div>
-                  <span className="rounded-lg inline-flex p-3 bg-orange-50 text-orange-700 ring-4 ring-white">
-                    <BuildingOfficeIcon className="h-6 w-6" />
-                  </span>
+            {/* Quick Stats */}
+            <div className="mt-6 pt-4 border-t">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Quick Stats</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="text-2xl font-bold text-gray-900">{stats.activeBorrows}</div>
+                  <div className="text-xs text-gray-600">Active Borrows</div>
                 </div>
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    Manage Rooms
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Add or view school rooms
-                  </p>
+                <div className="bg-red-50 p-3 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">{stats.overdueBorrows}</div>
+                  <div className="text-xs text-gray-600">Overdue</div>
                 </div>
-              </button>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{stats.totalItems}</div>
+                  <div className="text-xs text-gray-600">Total Items</div>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{stats.returnedThisMonth}</div>
+                  <div className="text-xs text-gray-600">Returned This Month</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
