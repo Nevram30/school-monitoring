@@ -80,7 +80,7 @@ export async function PUT(
       );
     }
 
-    // Convert borrower type string to integer
+    // Convert borrower type string to integer code
     const borrowerType = getBorrowerTypeFromString(borrowerData.m_type);
 
     const updateData = {
